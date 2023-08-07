@@ -1,10 +1,11 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import "../globals.css";
+import { Metadata } from "next";
 
-export const metadata = {
-  little: "THreads Clone",
-  description: "A Next.JS 13.4 and clark learning project",
+export const metadata: Metadata = {
+  title: "Threads",
+  description: "A Next.js 13 Meta Threads application",
 };
 
 const inter = Inter({ subsets: ["latin"] });
