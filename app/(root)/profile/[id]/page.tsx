@@ -1,7 +1,10 @@
 import ProfileHeader from "@/components/shared/ProfileHeader";
+import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { profileTabs } from "@/constants";
 import { fetchUser } from "@/lib/actions/user.action";
 import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
 //pass params to check the any user whoes id is passed on the params destuere it
 async function Page({ params }: { params: { id: string } }) {
@@ -19,6 +22,25 @@ async function Page({ params }: { params: { id: string } }) {
         imgUrl={userInfo.image}
         bio={userInfo.bio}
       />
+      <div className="mt-9">
+        <Tabs defaultValue="threads" className="w-full">
+          <TabsList className="tab">
+            {/* The tabs are present in the constants.js file you have to loop through them */}
+            {profileTabs.map((tab) => (
+              <TabsTrigger key={tab.label} value={tab.value} className="tab">
+                <Image
+                  src={tab.icon}
+                  alt={tab.label}
+                  width={24}
+                  height={24}
+                  className="object-contained"
+                />
+                <p className="max-sm:hidden">{tab.label}</p>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
     </section>
   );
 }
