@@ -36,9 +36,8 @@ export async function createThread({
   }
 }
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
-    connectToDB();
-    try {
-    
+  connectToDB();
+  try {
     //calculate the no. of pages to skip depending which page we are on?
     const skipAmount = (pageNumber - 1) * pageSize;
 
@@ -56,46 +55,78 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
           select: "_id name parentId image",
         },
       });
-      const totalPostsCount = await Thread.countDocuments({parentId: { $in: [null, undefined] }})
-      const posts = await postsQuery.exec();
-      const isNext = totalPostsCount > skipAmount + posts.length;
-      return {posts,isNext}
-  } catch (error:any) {
-    throw new Error(`Error fetching Posts: ${error.message}`)}
+    const totalPostsCount = await Thread.countDocuments({
+      parentId: { $in: [null, undefined] },
+    });
+    const posts = await postsQuery.exec();
+    const isNext = totalPostsCount > skipAmount + posts.length;
+    return { posts, isNext };
+  } catch (error: any) {
+    throw new Error(`Error fetching Posts: ${error.message}`);
+  }
 }
 
-export async function fetchThreadById(id:string){
-    connectToDB()
+export async function fetchThreadById(id: string) {
+  connectToDB();
+  try {
+    //TODO: populate comunity
+    const thread = await Thread.findById(id)
+      .populate({
+        path: "author",
+        model: User,
+        select: "_id id name image",
+      })
+      .populate({
+        path: "children",
+        populate: [
+          {
+            path: "author",
+            model: User,
+            select: "_id id name parentId image",
+          },
+          {
+            path: "children",
+            model: Thread,
+            populate: {
+              path: "author",
+              model: User,
+              select: "_id id name parentId image",
+            },
+          },
+        ],
+      })
+      .exec();
+    return thread;
+  } catch (error: any) {
+    throw new Error(`Error fetching thread: ${error.message}`);
+  }
+}
+
+export async function addCommentToThread(threadId:string,commentText:string,userId:string,path:string) {
+    connectToDB();
     try {
-        //TODO: populate comunity
-        const thread = await Thread.findById(id)
-        .populate({
-            path:'author',
-            model:User,
-            select:"_id id name image"
-        })
-        .populate({
-            path:'children',
-            populate:[
-                {
-                    path:'author',
-                    model:User,
-                    select:"_id id name parentId image"
-                },
-                {
-                    path:'children',
-                    model:Thread,
-                    populate:{
-                        path:'author',
-                        model:User,
-                        select:"_id id name parentId image"
-                    }
-                }
-            ]
-        }).exec();
-        return thread;
+        //logic for adding a comment
+        // find the original thread by id (this is the thread where we are gonna leave a comment)
+        const originalThread = await Thread.findById(threadId);
+        if(!originalThread){
+            throw new Error("Thread not found");
+        }
+        //create a new thread with the comment text.
+         const commentThread= new Thread({
+            text:commentText,
+            author:userId,
+            parentId:threadId,
+         })
+         //save the new thread to DB
+         const savedCommentThread = await commentThread.save();
+
+         //update the origian thread to include the new comment
+         originalThread.children.push(savedCommentThread._id)
+
+         //save the origina thread
+         await originalThread.save();
+         revalidatePath(path);
     } catch (error:any) {
-        throw new Error(`Error fetching thread: ${error.message}`)
-        
+        throw new Error(`Error adding comment to thread: ${error.message}`)
     }
 }
