@@ -5,6 +5,7 @@ import { fetchUser } from "@/lib/actions/user.action";
 import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import ThreadsTab from "@/components/shared/ThreadsTab";
 
 //pass params to check the any user whoes id is passed on the params destuere it
 async function Page({ params }: { params: { id: string } }) {
@@ -36,9 +37,27 @@ async function Page({ params }: { params: { id: string } }) {
                   className="object-contained"
                 />
                 <p className="max-sm:hidden">{tab.label}</p>
+                {tab.label === "Threads" && (
+                  <p className="ml-1 rounded-sm bg-light-4 px-2 py-1 !text-tiny-medium text-light-2">
+                    {userInfo?.threads?.length}
+                  </p>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
+          {profileTabs.map((tab) => (
+            <TabsContent
+              key={`content-${tab.label}`}
+              value={tab.value}
+              className="w-full text-light-1"
+            >
+              <ThreadsTab
+                currentUserId={user.id}
+                accountId={userInfo.id}
+                accountType="User"
+              />
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
     </section>
